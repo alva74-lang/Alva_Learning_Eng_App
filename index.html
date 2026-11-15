@@ -708,6 +708,92 @@
       border: 0;
     }
 
+    /* PDF Bilingual Reader Styles */
+    .pdf-a4-sheet {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.4rem 1.5rem;
+      box-shadow: var(--shadow);
+      max-width: 920px;
+      width: 100%;
+      margin: 0 auto 2rem;
+    }
+    .pdf-cover-banner {
+      background: linear-gradient(135deg, #1c3d7a 0%, #1e3a8a 100%);
+      border-left: 6px solid #14b8a6;
+      border-radius: 12px;
+      padding: 1.1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .pdf-chap-banner {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      margin: 1.15rem 0 0.5rem;
+    }
+    body.dark-mode .pdf-chap-banner {
+      background: rgba(37, 99, 235, 0.18);
+    }
+    body.dark-mode .pdf-chap-banner span {
+      color: #93c5fd !important;
+    }
+    .pdf-sent-row {
+      padding: 0.55rem 0.4rem;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: background 0.15s;
+      border-radius: 6px;
+    }
+    .pdf-sent-row:hover {
+      background: var(--primary-light);
+    }
+    .pdf-eng-line {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.48;
+    }
+    .pdf-sid {
+      color: var(--primary);
+      font-weight: 800;
+      margin-right: 0.25rem;
+    }
+    .pdf-page-tag {
+      color: #0d9488;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-right: 0.25rem;
+    }
+    .pdf-chi-line {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 0.22rem;
+      padding-left: 1rem;
+      line-height: 1.48;
+    }
+
+    @media print {
+      .navbar, .main-tabs, .bottom-dock, #pdf-toolbar-card, #pdf-iframe-wrap, #view-bookshelf, #view-practice, #view-vocab, #view-bookmarks {
+        display: none !important;
+      }
+      #view-pdf, #pdf-doc-container {
+        display: block !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+      }
+      .pdf-sent-row {
+        page-break-inside: avoid;
+      }
+      .pdf-chap-banner {
+        page-break-after: avoid;
+      }
+    }
+
   
     /* Password Lock Screen Styles */
     .lock-overlay {
@@ -928,6 +1014,9 @@
         <a class="icon-btn" id="btn-yt-link" href="https://www.youtube.com/watch?v=AoZ79U1j5r0&t=728s" target="_blank" rel="noopener" style="text-decoration: none;" title="開啟原版 YouTube 影片 (12:08)">
           <i class="fab fa-youtube" style="color: #ffdad6;"></i> 原片
         </a>
+        <button class="icon-btn" id="btn-nav-pdf" onclick="openPdfReader()" title="閱讀或下載雙語 PDF 講義">
+          <i class="fas fa-file-pdf" style="color: #fecaca;"></i> 讀 PDF
+        </button>
         <button class="icon-btn" id="btn-open-add" title="新增或擴充文章">
           <i class="fas fa-plus"></i> 擴充文章
         </button>
@@ -990,8 +1079,11 @@
       </div>
     </div>
 
-    <div style="font-size: 0.92rem; font-weight: 800; margin: 0.5rem 0 0.65rem; display: flex; justify-content: space-between; align-items: center;">
+    <div style="font-size: 0.92rem; font-weight: 800; margin: 0.5rem 0 0.65rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
       <span>📚 點擊選擇要練習的主題（共 9 部教材 · 內容已解密）</span>
+      <button type="button" onclick="openPdfReader(activeBookId || (BOOK_CATALOG[0] && BOOK_CATALOG[0].id))" style="background: #dc2626; color: white; border: none; border-radius: 99px; padding: 0.35rem 0.85rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; box-shadow: 0 2px 6px rgba(220,38,38,0.28);">
+        <i class="fas fa-file-pdf"></i> 閱讀全書櫃 PDF 雙語講義
+      </button>
     </div>
 
     <div class="book-grid" id="bookshelf-cards"></div>
@@ -1001,6 +1093,9 @@
   <div class="main-tabs" id="main-tabs-bar" style="display: none;">
     <div class="tab-pill active" id="tab-practice" onclick="switchTab('practice')">
       <i class="fas fa-book-open-reader"></i> 課文跟讀
+    </div>
+    <div class="tab-pill" id="tab-pdf" onclick="switchTab('pdf')">
+      <i class="fas fa-file-pdf" style="color: #dc2626;"></i> PDF 雙語講義
     </div>
     <div class="tab-pill" id="tab-vocab" onclick="switchTab('vocab')">
       <i class="fas fa-star"></i> 生字閃卡 <span class="badge-count" id="vocab-count-badge">0</span>
@@ -1200,6 +1295,58 @@
       <h3 style="margin-top: 0; font-size: 1.05rem;"><i class="fas fa-bookmark"></i> 收藏佳句複習</h3>
       <div id="bookmarks-container"></div>
     </div>
+  </div>
+
+  <!-- VIEW 4: PDF Bilingual Reader & Native PDF Viewer -->
+  <div class="container" id="view-pdf" style="display: none; grid-template-columns: minmax(0, 1fr);">
+    <div class="card" id="pdf-toolbar-card" style="padding: 0.9rem 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.65rem;">
+        <h3 style="margin: 0; font-size: 1.02rem; display: flex; align-items: center; gap: 0.45rem;">
+          <i class="fas fa-file-pdf" style="color: #dc2626; font-size: 1.2rem;"></i>
+          <span>Topic 雙語 PDF 講義閱讀器</span>
+        </h3>
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;">
+          <button class="speed-btn active" id="btn-pdf-mode-html" onclick="setPdfViewerMode('html')" title="內建 A4 雙語講義模式（免外掛檔案、點擊句子即可直接發音）">
+            📖 內建雙語講義 (點句發音)
+          </button>
+          <button class="speed-btn" id="btn-pdf-mode-iframe" onclick="setPdfViewerMode('iframe')" title="在網頁內直接嵌入檢視 PDF_Topics 資料夾中的實體 PDF 檔">
+            📑 原生 PDF 檔案預覽
+          </button>
+          <a class="speed-btn" id="btn-pdf-download-link" href="PDF_Topics/05_BBC_Global_Story_US_China_Trade_War.pdf" target="_blank" rel="noopener" style="text-decoration: none; background: #dc2626; color: white; border-color: #dc2626;" title="在新分頁開啟或下載此 Topic 的實體 PDF 檔案">
+            <i class="fas fa-up-right-from-square"></i> 開啟/下載 PDF 檔
+          </a>
+          <button class="speed-btn" onclick="window.print()" title="列印或另存為 A4 PDF">
+            <i class="fas fa-print"></i> 列印 PDF
+          </button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; align-items: center;">
+        <select id="pdf-topic-select" class="filter-select" onchange="onPdfTopicChange(this.value)" style="width: 100%; font-weight: 700;" title="切換要閱讀的書櫃 Topic PDF">
+        </select>
+        <select id="pdf-chap-select" class="filter-select" onchange="renderPdfReaderContent()" style="width: 100%;" title="篩選特定章節或集數">
+          <option value="all">📚 全部章節 / 集數</option>
+        </select>
+        <select id="pdf-lang-select" class="filter-select" onchange="renderPdfReaderContent()" style="width: 100%;" title="切換顯示語言">
+          <option value="bilingual">🌐 中英雙語對照</option>
+          <option value="eng">🇬🇧 僅顯示英文 (練閱讀)</option>
+          <option value="chi">🇹🇼 僅顯示中文 (練回譯)</option>
+        </select>
+        <input type="text" id="pdf-search-input" class="search-input" placeholder="🔍 在此份 PDF 講義中搜尋中英文關鍵字..." oninput="renderPdfReaderContent()" style="width: 100%;">
+      </div>
+    </div>
+
+    <!-- Mode B: Native PDF File Iframe Viewer -->
+    <div class="card" id="pdf-iframe-wrap" style="display: none; padding: 0.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.5rem 0.6rem; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+        <span id="pdf-iframe-path-label">📂 實體檔案路徑：<code>PDF_Topics/...</code></span>
+        <span>💡 若在 iPhone Safari 或僅上傳單一 <code>index.html</code> 時無法載入外部 PDF，請切換回左上方「<strong>📖 內建雙語講義</strong>」即可免外部檔案完整閱讀全書！</span>
+      </div>
+      <iframe id="pdf-native-iframe" src="" style="width: 100%; height: 78vh; border: 1px solid var(--border-color); border-radius: 12px; background: #525659;"></iframe>
+    </div>
+
+    <!-- Mode A: Built-in A4 Bilingual PDF Sheet Viewer -->
+    <div id="pdf-doc-container" class="pdf-a4-sheet"></div>
   </div>
 
   <!-- Sticky Bottom Control Dock for iPhone -->
@@ -1487,13 +1634,18 @@ window.ALL_BOOKS_DATA = {};
               <div class="progress-bar-fill" style="width: ${pct}%;"></div>
             </div>
           </div>
-          <div class="book-footer">
+          <div class="book-footer" style="flex-wrap: wrap; gap: 0.5rem;">
             <div>
               <span>⭐ ${vocab.length} 生字</span> ·
               <span>🔖 ${bms.length} 收藏</span> ·
               <span>🕒 ${lastHint}</span>
             </div>
-            <span class="enter-pill">進入練功 <i class="fas fa-arrow-right"></i></span>
+            <div style="display: flex; align-items: center; gap: 0.45rem;">
+              <button type="button" class="enter-pill" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; cursor: pointer;" onclick="event.stopPropagation(); openPdfReader('${book.id}');" title="直接閱讀或下載此 Topic 的中英雙語 PDF 講義">
+                <i class="fas fa-file-pdf"></i> 讀 PDF 講義
+              </button>
+              <span class="enter-pill">進入練功 <i class="fas fa-arrow-right"></i></span>
+            </div>
           </div>
         `;
         containerEl.appendChild(card);
@@ -1511,6 +1663,8 @@ window.ALL_BOOKS_DATA = {};
       document.getElementById('view-practice').style.display = 'none';
       document.getElementById('view-vocab').style.display = 'none';
       document.getElementById('view-bookmarks').style.display = 'none';
+      const pdfV = document.getElementById('view-pdf');
+      if (pdfV) pdfV.style.display = 'none';
       document.getElementById('bottom-dock-bar').style.display = 'none';
       document.getElementById('btn-back-bookshelf').style.display = 'none';
       document.getElementById('btn-yt-link').style.display = 'none';
@@ -2852,17 +3006,212 @@ window.ALL_BOOKS_DATA = {};
       document.getElementById('bookmark-count-badge').textContent = userBookmarks.length;
     }
 
-    // ====== Tabs, Flashcards & Bookmarks View ======
+    // ====== Tabs, PDF Reader, Flashcards & Bookmarks View ======
+    const TOPIC_PDF_FILE_MAP = {
+      'office_english': 'PDF_Topics/01_BBC_Office_English_EP01-10.pdf',
+      'eaw': 'PDF_Topics/02_BBC_English_at_Work_EP00-66.pdf',
+      'cpr_video': 'PDF_Topics/03_CPR_Video_Automation_Presentation.pdf',
+      'sae': 'PDF_Topics/04_Same_as_Ever_Morgan_Housel.pdf',
+      'bbc': 'PDF_Topics/05_BBC_Global_Story_US_China_Trade_War.pdf',
+      'bbc_energy': 'PDF_Topics/06_BBC_News_Energy_Prices_Skyrocketing.pdf',
+      'bbc_nvidia': 'PDF_Topics/07_BBC_Newscast_Nvidia_Jensen_Huang.pdf',
+      'bbc_apocalypse': 'PDF_Topics/08_BBC_News_Preparing_for_Apocalypse.pdf',
+      'bbc_stockpile': 'PDF_Topics/09_BBC_News_UK_Stockpile.pdf'
+    };
+    let currentPdfViewerMode = 'html';
+
     window.switchTab = function(tab) {
       document.querySelectorAll('.tab-pill').forEach(el => el.classList.remove('active'));
-      document.getElementById(`tab-${tab}`).classList.add('active');
+      const tabEl = document.getElementById(`tab-${tab}`);
+      if (tabEl) tabEl.classList.add('active');
 
       document.getElementById('view-practice').style.display = tab === 'practice' ? 'grid' : 'none';
       document.getElementById('view-vocab').style.display = tab === 'vocab' ? 'block' : 'none';
       document.getElementById('view-bookmarks').style.display = tab === 'bookmarks' ? 'block' : 'none';
+      const pdfView = document.getElementById('view-pdf');
+      if (pdfView) pdfView.style.display = tab === 'pdf' ? 'grid' : 'none';
 
       if (tab === 'vocab') renderVocabView();
       if (tab === 'bookmarks') renderBookmarksView();
+      if (tab === 'pdf') initAndRenderPdfReader();
+    };
+
+    window.openPdfReader = function(targetBookId) {
+      if (typeof BOOK_CATALOG !== 'undefined' && BOOK_CATALOG.length > 0) {
+        const bid = targetBookId || (typeof activeBookId !== 'undefined' ? activeBookId : BOOK_CATALOG[0].id);
+        if (typeof openBook === 'function' && (document.getElementById('view-bookshelf')?.style.display !== 'none' || bid !== activeBookId)) {
+          openBook(bid);
+        }
+      }
+      switchTab('pdf');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.setPdfViewerMode = function(mode) {
+      currentPdfViewerMode = mode;
+      const btnHtml = document.getElementById('btn-pdf-mode-html');
+      const btnIframe = document.getElementById('btn-pdf-mode-iframe');
+      const docWrap = document.getElementById('pdf-doc-container');
+      const iframeWrap = document.getElementById('pdf-iframe-wrap');
+      if (btnHtml) btnHtml.classList.toggle('active', mode === 'html');
+      if (btnIframe) btnIframe.classList.toggle('active', mode === 'iframe');
+      if (docWrap) docWrap.style.display = mode === 'html' ? 'block' : 'none';
+      if (iframeWrap) iframeWrap.style.display = mode === 'iframe' ? 'block' : 'none';
+      if (mode === 'iframe') {
+        const bid = document.getElementById('pdf-topic-select')?.value || (typeof activeBookId !== 'undefined' ? activeBookId : 'bbc');
+        const pdfFile = TOPIC_PDF_FILE_MAP[bid] || 'PDF_Topics/05_BBC_Global_Story_US_China_Trade_War.pdf';
+        const iframe = document.getElementById('pdf-native-iframe');
+        if (iframe && iframe.getAttribute('src') !== pdfFile) {
+          iframe.setAttribute('src', pdfFile);
+        }
+      }
+    };
+
+    window.onPdfTopicChange = function(newBookId) {
+      if (typeof openBook === 'function' && typeof BOOK_CATALOG !== 'undefined' && BOOK_CATALOG.some(b => b.id === newBookId)) {
+        openBook(newBookId);
+        switchTab('pdf');
+      } else {
+        initAndRenderPdfReader();
+      }
+    };
+
+    function initAndRenderPdfReader() {
+      const topicSel = document.getElementById('pdf-topic-select');
+      const chapSel = document.getElementById('pdf-chap-select');
+      if (!topicSel || !chapSel) return;
+
+      const curBid = (typeof activeBookId !== 'undefined' && activeBookId) ? activeBookId : 'bbc';
+      if (typeof BOOK_CATALOG !== 'undefined' && BOOK_CATALOG.length > 0) {
+        topicSel.innerHTML = '';
+        BOOK_CATALOG.forEach((b, i) => {
+          const opt = document.createElement('option');
+          opt.value = b.id;
+          opt.textContent = `📄 0${i + 1}. ${b.title}`;
+          if (b.id === curBid) opt.selected = true;
+          topicSel.appendChild(opt);
+        });
+      } else {
+        topicSel.innerHTML = '<option value="bbc">📄 BBC Global Story — 美中關稅貿易戰</option>';
+      }
+
+      const pdfFile = TOPIC_PDF_FILE_MAP[curBid] || 'PDF_Topics/05_BBC_Global_Story_US_China_Trade_War.pdf';
+      const dlLink = document.getElementById('btn-pdf-download-link');
+      if (dlLink) dlLink.href = pdfFile;
+      const pathLabel = document.getElementById('pdf-iframe-path-label');
+      if (pathLabel) pathLabel.innerHTML = `📂 實體 PDF 檔案路徑：<code>${pdfFile}</code>`;
+      if (currentPdfViewerMode === 'iframe') {
+        const iframe = document.getElementById('pdf-native-iframe');
+        if (iframe) iframe.setAttribute('src', pdfFile);
+      }
+
+      const chapKeys = Object.keys(window.bookData || {});
+      chapSel.innerHTML = `<option value="all">📚 全部章節 / 集數 (共 ${chapKeys.length} 章)</option>`;
+      chapKeys.forEach((k, idx) => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.textContent = `[${idx + 1}/${chapKeys.length}] ${window.bookData[k].title || k}`;
+        chapSel.appendChild(opt);
+      });
+
+      renderPdfReaderContent();
+    }
+
+    window.speakPdfSentence = function(engText) {
+      if (!engText) return;
+      stopAllAudio();
+      const u = new SpeechSynthesisUtterance(engText);
+      const v = getSelectedVoice();
+      if (v) u.voice = v;
+      u.lang = 'en-US';
+      u.rate = speechRate;
+      window.speechSynthesis.speak(u);
+    };
+
+    window.renderPdfReaderContent = function() {
+      const docEl = document.getElementById('pdf-doc-container');
+      if (!docEl) return;
+
+      const curBid = (typeof activeBookId !== 'undefined' && activeBookId) ? activeBookId : 'bbc';
+      const bookMeta = (typeof BOOK_CATALOG !== 'undefined' && BOOK_CATALOG.find(b => b.id === curBid)) || {
+        title: 'BBC Global Story — 美中關稅貿易戰',
+        desc: 'Can Trump win a trade war with China?',
+        ytUrl: 'https://www.youtube.com/watch?v=AoZ79U1j5r0&t=728s'
+      };
+      const pdfFile = TOPIC_PDF_FILE_MAP[curBid] || 'PDF_Topics/05_BBC_Global_Story_US_China_Trade_War.pdf';
+
+      const selectedChap = document.getElementById('pdf-chap-select')?.value || 'all';
+      const langMode = document.getElementById('pdf-lang-select')?.value || 'bilingual';
+      const query = (document.getElementById('pdf-search-input')?.value || '').trim().toLowerCase();
+
+      const allKeys = Object.keys(window.bookData || {});
+      let totalSentsAll = 0;
+      allKeys.forEach(k => { totalSentsAll += (window.bookData[k]?.sentences?.length || 0); });
+
+      const targetKeys = selectedChap === 'all' ? allKeys : allKeys.filter(k => k === selectedChap);
+
+      let html = `
+        <div class="pdf-cover-banner">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap;">
+            <div>
+              <div style="font-size: 1.2rem; font-weight: 800; color: #ffffff; line-height: 1.35;">${bookMeta.title}</div>
+              <div style="font-size: 0.84rem; color: #dbeafe; margin-top: 0.3rem; line-height: 1.45;">${bookMeta.desc || ''}</div>
+              <div style="font-size: 0.78rem; color: #99f6e4; margin-top: 0.35rem; font-weight: 600;">
+                📑 共 ${allKeys.length} 章節/集數 · ${totalSentsAll} 句完整雙語收錄 · 對應檔案：<code>${pdfFile}</code>
+                ${bookMeta.ytUrl ? ` · <a href="${bookMeta.ytUrl}" target="_blank" rel="noopener" style="color: #fef08a; text-decoration: underline;"><i class="fab fa-youtube"></i> 開啟 YouTube 原片/清單</a>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      let matchCount = 0;
+      targetKeys.forEach(k => {
+        const ch = window.bookData[k];
+        if (!ch) return;
+        const chIdx = allKeys.indexOf(k) + 1;
+        const sents = (ch.sentences || []).filter(s => {
+          if (!query) return true;
+          return (s.eng || '').toLowerCase().includes(query) ||
+                 (s.chi || '').toLowerCase().includes(query) ||
+                 String(s.page || '').toLowerCase().includes(query) ||
+                 String(s.id || '').includes(query);
+        });
+        if (sents.length === 0) return;
+
+        const vid = ch.videoId || (ch.sentences && ch.sentences[0] && ch.sentences[0].videoId) || '';
+        const epYtUrl = vid ? `https://www.youtube.com/watch?v=${vid}` : '';
+
+        html += `
+          <div class="pdf-chap-banner">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.4rem;">
+              <span style="font-weight: 800; color: #1e3a8a; font-size: 0.96rem;">[${chIdx}/${allKeys.length}] ${ch.title || k} (${sents.length} 句)</span>
+              ${epYtUrl ? `<a href="${epYtUrl}" target="_blank" rel="noopener" style="font-size: 0.76rem; color: #dc2626; font-weight: 700; text-decoration: none; background: #fef2f2; border: 1px solid #fecaca; padding: 0.12rem 0.55rem; border-radius: 99px;"><i class="fab fa-youtube"></i> 本集 YouTube</a>` : ''}
+            </div>
+          </div>
+          <div class="pdf-sent-list">
+        `;
+
+        sents.forEach(s => {
+          matchCount++;
+          const safeEng = (s.eng || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          const pageBadge = s.page ? `<span class="pdf-page-tag">[${s.page}]</span>` : '';
+          html += `
+            <div class="pdf-sent-row" onclick="speakPdfSentence('${safeEng}')" title="點擊朗讀此句英文">
+              ${langMode !== 'chi' ? `<div class="pdf-eng-line"><span class="pdf-sid">#${s.id}</span> ${pageBadge} ${s.eng || ''} <i class="fas fa-volume-low" style="color: var(--primary); opacity: 0.55; font-size: 0.8rem; margin-left: 0.25rem;"></i></div>` : `<div class="pdf-eng-line"><span class="pdf-sid">#${s.id}</span> ${pageBadge}</div>`}
+              ${langMode !== 'eng' && s.chi ? `<div class="pdf-chi-line">${s.chi}</div>` : ''}
+            </div>
+          `;
+        });
+
+        html += `</div>`;
+      });
+
+      if (matchCount === 0) {
+        html += `<div style="padding: 2rem; text-align: center; color: var(--text-muted);">找不到符合「${query}」的句子。</div>`;
+      }
+
+      docEl.innerHTML = html;
     };
 
     function renderVocabView() {
