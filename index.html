@@ -2500,6 +2500,8 @@ window.ALL_BOOKS_DATA = {};
     let userWantsRecording = false;
     let lastLatestCombinedText = "";
     let autoStopTimer = null;
+    let maxDurationTimer = null;
+    const MAX_RECORDING_DURATION_MS = 3.5 * 60 * 1000; // 3分30秒 (210秒) 最長跟讀時間上限
     let micPersistOption = localStorage.getItem('agy_mic_persist_v1') !== 'false'; // default true (keep mic open when switching sentences)
     let recognitionRunning = false;
     let lastHadNoSpeechError = false;
@@ -2596,10 +2598,31 @@ window.ALL_BOOKS_DATA = {};
       }
     }
 
+    function clearMaxDurationTimer() {
+      if (maxDurationTimer) {
+        clearTimeout(maxDurationTimer);
+        maxDurationTimer = null;
+      }
+    }
+
+    function startMaxDurationTimer() {
+      clearMaxDurationTimer();
+      maxDurationTimer = setTimeout(() => {
+        if (userWantsRecording || isRecording || recognitionRunning) {
+          stopRecordingNow(true);
+          if (feedbackCard) feedbackCard.style.display = 'block';
+          if (recognizedText) {
+            recognizedText.innerHTML = '⏱️ <strong>跟讀時間已超過 3 分鐘半（3分30秒），系統已自動停止跟讀並關閉麥克風！</strong> <span style="font-size:0.75rem; color:var(--text-muted);">（如需繼續練習，請再點一下「🎤 跟讀評分」）</span>';
+          }
+        }
+      }, MAX_RECORDING_DURATION_MS);
+    }
+
     function stopRecordingNow(forceHardwareClose = false) {
       userWantsRecording = false;
       isRecording = false;
       clearAutoStopTimer();
+      clearMaxDurationTimer();
 
       // IMPORTANT: When on file:// or when "常駐啟用麥克風" is checked, DO NOT call recognition.stop() when pausing scoring!
       // Calling recognition.stop() on file:// revokes the permission and causes the browser to ask again on the next click!
@@ -2811,6 +2834,7 @@ window.ALL_BOOKS_DATA = {};
 
       userWantsRecording = true;
       isRecording = true;
+      startMaxDurationTimer();
 
       // If recognition is ALREADY running in the background, reuse it directly!
       // This avoids calling recognition.start() again, so file:// NEVER shows the permission popup a second time!
