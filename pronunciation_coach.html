@@ -652,7 +652,10 @@
       </h1>
       <div class="nav-actions">
         <a href="index.html" class="icon-btn" title="返回 Alva 英文跟讀練功總書櫃">
-          <i class="fas fa-book-open"></i> <span>回總書櫃</span>
+          <i class="fas fa-book-open"></i> <span>總書櫃</span>
+        </a>
+        <a href="sentence_memory_coach.html" class="icon-btn" title="前往英文句子脫稿記憶與簡報教練">
+          <i class="fas fa-brain"></i> <span>🧠 背句教練</span>
         </a>
         <select id="voice-select" class="icon-btn" style="background: rgba(15,23,42,0.35); max-width: 165px; text-overflow: ellipsis;" title="選擇美式發音語音"></select>
         <button class="icon-btn" id="btn-persist-mic" onclick="togglePersistentMic()" title="開啟常駐麥克風（授權一次即可跨題連續跟讀與錄音）">
@@ -2952,6 +2955,17 @@
       renderPhonemeChart();
       initMinimalPairsView();
       generateDailyRoutine(false);
+
+      // Check if opened with ?word= parameter from sentence_memory_coach.html
+      const urlWord = new URLSearchParams(window.location.search).get('word');
+      if (urlWord && urlWord.trim()) {
+        const wClean = urlWord.trim();
+        const wObj = VOCAB_BY_WORD[wClean.toLowerCase()] || synthesizeCustomWordObj(wClean);
+        switchMainTab('vocab');
+        selectWordForStudio(wObj, true);
+        return;
+      }
+
       if (dailyRoutine.length > 0) {
         activateDailyTask(0, false);
       } else if (ALL_VOCAB.length > 0) {
